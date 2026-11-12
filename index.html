@@ -1,0 +1,3097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Hall Of Frame — Offline Device &amp; SD Card .PSD Manager</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d1017">
+  <style>
+    /* ==========================================================================
+       DESIGN TOKENS & DYNAMIC STUDIO THEME ENGINE (100% OFFLINE)
+       ========================================================================== */
+    @font-face {
+      font-family: 'Spotify Mix';
+      src: url('fonts/SpotifyMix-Regular.woff2') format('woff2');
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'Spotify Mix';
+      src: url('fonts/SpotifyMix-Bold.woff2') format('woff2');
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'Spotify Mix';
+      src: url('fonts/SpotifyMix-ExtraBold.woff2') format('woff2');
+      font-weight: 800; font-style: normal; font-display: swap;
+    }
+    /* Inter Bold, offline ke liye local file */
+    @font-face {
+      font-family: 'Inter';
+      src: local('Inter Bold'), local('Inter-Bold'),
+           url('fonts/Inter-Bold.woff2') format('woff2');
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+
+    :root {
+      --bg-app: #0d1017;
+      --bg-surface: #131722;
+      --bg-card: #161b26;
+      --bg-card-hover: #1d2433;
+      --bg-elevated: #1e2536;
+      --border-subtle: rgba(148, 163, 184, 0.14);
+      --border-strong: rgba(148, 163, 184, 0.26);
+      --border-accent: rgba(43, 127, 255, 0.55);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #2b7fff;
+      --accent-sky: #38bdf8;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --shadow-card: 0 10px 25px -8px rgba(0, 0, 0, 0.55);
+      --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --font-sans: 'Spotify Mix', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button, input, select, textarea { font-family: inherit; }
+
+    .app-name {
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    html, body {
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-app);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2c3548;
+      border-radius: 999px;
+    }
+
+    /* Header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: rgba(13, 16, 23, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 16px;
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-blue) 0%, #1d4ed8 100%);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      box-shadow: 0 6px 20px rgba(43, 127, 255, 0.35);
+      flex-shrink: 0;
+      transition: background 0.3s ease;
+    }
+
+    .brand-title {
+      font-size: 1.12rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-offline {
+      font-size: 0.66rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.14);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-sub {
+      font-size: 0.77rem;
+      color: var(--text-secondary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 15px;
+      border-radius: 11px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.16s ease;
+      user-select: none;
+      min-height: 40px;
+      white-space: nowrap;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blue), #1e62d0);
+      color: #ffffff;
+      box-shadow: 0 6px 18px rgba(43, 127, 255, 0.32);
+      border-color: rgba(56, 189, 248, 0.3);
+      transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.09);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-color: var(--border-subtle);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-card-hover);
+      border-color: var(--border-accent);
+    }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.14);
+      color: #fb7185;
+      border-color: rgba(244, 63, 94, 0.35);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(244, 63, 94, 0.24);
+      color: #ffe4e6;
+    }
+
+    .btn-danger-solid {
+      background: #e11d48;
+      color: #ffffff;
+      box-shadow: 0 6px 18px rgba(225, 29, 72, 0.35);
+    }
+
+    .btn-danger-solid:hover:not(:disabled) {
+      background: #f43f5e;
+    }
+
+    .btn-icon {
+      padding: 8px 10px;
+      min-width: 38px;
+    }
+
+    .btn-icon.active {
+      background: rgba(43, 127, 255, 0.18);
+      border-color: var(--accent-blue);
+      color: var(--accent-sky);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Storage Mount & Guide Panel */
+    .storage-panel {
+      background: linear-gradient(145deg, #161b26 0%, #11151f 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .storage-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 900px) {
+      .storage-grid {
+        grid-template-columns: 1.45fr 1fr;
+        align-items: center;
+      }
+    }
+
+    .panel-heading {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .panel-desc {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .mounted-roots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+    }
+
+    .root-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(43, 127, 255, 0.12);
+      border: 1px solid rgba(43, 127, 255, 0.35);
+      color: #93c5fd;
+    }
+
+    .root-chip.readonly {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #fcd34d;
+    }
+
+    .mount-box {
+      background: rgba(13, 16, 23, 0.65);
+      border: 1px dashed rgba(56, 189, 248, 0.4);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .mount-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .mount-actions .btn {
+      flex: 1 1 155px;
+    }
+
+    /* Stats Grid */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .stats-bar {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .stat-label {
+      font-size: 0.71rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-val {
+      font-size: 1.24rem;
+      font-weight: 800;
+      margin-top: 2px;
+      color: var(--text-primary);
+    }
+
+    .stat-val.blue {
+      color: var(--accent-sky);
+    }
+
+    /* Scanning Progress Banner */
+    .scan-banner {
+      display: none;
+      background: rgba(43, 127, 255, 0.12);
+      border: 1px solid rgba(43, 127, 255, 0.4);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .scan-banner.active {
+      display: flex;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(56, 189, 248, 0.25);
+      border-top-color: var(--accent-sky);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Filter Pills & Bulk Action Bar */
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      padding: 6px 13px;
+      border-radius: 999px;
+      font-size: 0.79rem;
+      font-weight: 600;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .pill:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    .pill.active {
+      background: var(--accent-blue);
+      color: #ffffff;
+      border-color: var(--accent-blue);
+    }
+
+    .bulk-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: rgba(43, 127, 255, 0.14);
+      border: 1px solid rgba(43, 127, 255, 0.45);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+
+    .bulk-bar.active {
+      display: flex;
+    }
+
+    /* Search & Sort Toolbar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+      align-items: center;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1 1 240px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      border-radius: 11px;
+      padding: 9px 14px 9px 38px;
+      font-size: 0.88rem;
+      outline: none;
+      min-height: 40px;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(43, 127, 255, 0.18);
+    }
+
+    .select-input {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      border-radius: 11px;
+      padding: 9px 12px;
+      font-size: 0.84rem;
+      min-height: 40px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Checkerboard for Transparent PSDs */
+    .checkerboard {
+      background-color: #1c2230;
+      background-image:
+        linear-gradient(45deg, #121620 25%, transparent 25%),
+        linear-gradient(-45deg, #121620 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #121620 75%),
+        linear-gradient(-45deg, transparent 75%, #121620 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    /* Gallery Grid & List */
+    .psd-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 14px;
+    }
+
+    @media (min-width: 640px) {
+      .psd-grid {
+        grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+        gap: 16px;
+      }
+    }
+
+    .psd-grid.list-view {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .psd-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .psd-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-accent);
+      box-shadow: var(--shadow-card);
+    }
+
+    .psd-card.selected {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(43, 127, 255, 0.35);
+    }
+
+    .psd-grid.list-view .psd-card {
+      flex-direction: row;
+      align-items: center;
+      padding: 8px 10px;
+      gap: 12px;
+    }
+
+    .card-select-wrap {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .psd-grid.list-view .card-select-wrap {
+      position: static;
+    }
+
+    .card-checkbox {
+      width: 19px;
+      height: 19px;
+      accent-color: var(--accent-blue);
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .thumb-area {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+    }
+
+    .psd-grid.list-view .thumb-area {
+      width: 78px;
+      height: 60px;
+      aspect-ratio: auto;
+      border-bottom: none;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .thumb-area img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .storage-tag {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(13, 16, 23, 0.85);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent-sky);
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      max-width: 110px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .psd-grid.list-view .storage-tag {
+      display: none;
+    }
+
+    .dim-tag {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(13, 16, 23, 0.85);
+      color: #e2e8f0;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .psd-grid.list-view .dim-tag {
+      display: none;
+    }
+
+    .card-body {
+      padding: 11px 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .psd-grid.list-view .card-body {
+      padding: 2px 4px;
+    }
+
+    .file-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.73rem;
+      color: var(--text-secondary);
+    }
+
+    .file-path-text {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Card Quick File Actions (Rename & Delete) */
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px 10px;
+      border-top: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .psd-grid.list-view .card-actions {
+      border-top: none;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .mini-btn {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 6px 9px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mini-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--border-accent);
+      background: #252e42;
+    }
+
+    .mini-btn.del:hover {
+      color: #fda4af;
+      border-color: rgba(244, 63, 94, 0.45);
+      background: rgba(244, 63, 94, 0.16);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-xl);
+    }
+
+    .empty-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 14px;
+      border-radius: 16px;
+      background: rgba(43, 127, 255, 0.14);
+      color: var(--accent-sky);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==========================================================================
+       FULL-SCREEN STUDIO LIGHTBOX MODAL
+       ========================================================================== */
+    .lightbox-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(7, 9, 14, 0.97);
+      display: none;
+      flex-direction: column;
+    }
+
+    .lightbox-backdrop.open {
+      display: flex;
+    }
+
+    .lightbox-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+    }
+
+    .lightbox-title-box {
+      min-width: 0;
+      flex: 1 1 200px;
+    }
+
+    .lightbox-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lightbox-path {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lightbox-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .lightbox-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    @media (min-width: 920px) {
+      .lightbox-body {
+        flex-direction: row;
+      }
+    }
+
+    .canvas-stage {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .canvas-stage:active {
+      cursor: grabbing;
+    }
+
+    .canvas-stage.bg-dark {
+      background: #090c12;
+    }
+
+    .canvas-stage.bg-light {
+      background: #e2e8f0;
+    }
+
+    #previewCanvas {
+      transform-origin: center center;
+      box-shadow: 0 22px 55px rgba(0, 0, 0, 0.75);
+    }
+
+    .zoom-dock {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(19, 23, 34, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 10px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-modal);
+      z-index: 10;
+    }
+
+    .zoom-text {
+      font-size: 0.76rem;
+      font-family: var(--font-mono);
+      min-width: 46px;
+      text-align: center;
+      color: var(--text-primary);
+    }
+
+    .inspector-aside {
+      width: 100%;
+      max-height: 35vh;
+      overflow-y: auto;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      padding: 14px 16px;
+      flex-shrink: 0;
+    }
+
+    @media (min-width: 920px) {
+      .inspector-aside {
+        width: 340px;
+        max-height: none;
+        border-top: none;
+        border-left: 1px solid var(--border-subtle);
+      }
+    }
+
+    .aside-heading {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent-sky);
+      margin-bottom: 10px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .meta-cell {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .meta-cell.span-2 {
+      grid-column: 1 / -1;
+    }
+
+    .meta-key {
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .meta-val {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      word-break: break-word;
+      margin-top: 2px;
+    }
+
+    .layer-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .layer-row {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 0.79rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .layer-row span:first-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ==========================================================================
+       DIALOG MODALS (RENAME FILE & DELETE CONFIRMATION)
+       ========================================================================== */
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: rgba(5, 7, 12, 0.82);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .dialog-overlay.open {
+      display: flex;
+    }
+
+    .dialog-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      box-shadow: var(--shadow-modal);
+      animation: popIn 0.16s ease;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .dialog-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dialog-desc {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .dialog-input-group {
+      display: flex;
+      align-items: center;
+      background: var(--bg-app);
+      border: 1px solid var(--border-strong);
+      border-radius: 11px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .dialog-input-group:focus-within {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(43, 127, 255, 0.2);
+    }
+
+    .dialog-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      padding: 11px 12px;
+      font-size: 0.92rem;
+      outline: none;
+      min-width: 0;
+    }
+
+    .dialog-ext {
+      padding: 0 12px;
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--accent-sky);
+      background: rgba(43, 127, 255, 0.12);
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    .delete-summary-box {
+      background: rgba(244, 63, 94, 0.08);
+      border: 1px solid rgba(244, 63, 94, 0.28);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 0.82rem;
+    }
+
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 440px;
+      background: #1c2436;
+      color: #f8fafc;
+      border: 1px solid var(--border-accent);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-modal);
+      z-index: 95;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast.show {
+      display: flex;
+      animation: fadeUp 0.2s ease;
+    }
+
+    @keyframes fadeUp {
+      from { transform: translate(-50%, 14px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP APPLICATION BAR -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">HOF</div>
+        <div>
+          <div class="brand-title">
+            <span class="app-name">Hall Of Frame</span>
+            <span class="badge-offline">100% Offline</span>
+          </div>
+          <div class="brand-sub">Device &amp; SD Card Only-.psd Previewer &amp; File Manager</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btnHeaderAddDrive" class="btn btn-primary" title="Scan Internal Storage or External SD Card">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+          </svg>
+          <span>Scan Storage / SD Card</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="container">
+
+    <!-- STORAGE MOUNT & INSTRUCTIONS PANEL -->
+    <section class="storage-panel">
+      <div class="storage-grid">
+        <div>
+          <div class="panel-heading">
+            <svg width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="2.2" viewBox="0 0 24 24">
+              <rect x="2" y="4" width="20" height="16" rx="3"></rect>
+              <path d="M6 8h.01M10 8h.01"></path>
+            </svg>
+            Full Device Storage &amp; External SD Card Access
+          </div>
+          <p class="panel-desc">
+            Select your <strong>Internal Storage</strong> root folder or <strong>SD Card</strong> to recursively scan all folders and display <strong>only .psd files</strong> offline. Granting read/write folder permission enables direct on-device <strong>file renaming</strong> and <strong>permanent deletion</strong>.
+          </p>
+          <div id="mountedRootsList" class="mounted-roots">
+            <span style="font-size:0.75rem; color:var(--text-muted);">Mounted Drives:</span>
+          </div>
+        </div>
+
+        <div class="mount-box">
+          <div style="font-size:0.79rem; font-weight:600; color:#cbd5e1;">
+            Mount Storage Volumes (Read &amp; Write Mode):
+          </div>
+          <div class="mount-actions">
+            <button id="btnMountReadWrite" class="btn btn-primary">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+              </svg>
+              Add Internal / SD Card
+            </button>
+            <button id="btnMountFallback" class="btn btn-secondary" title="Compatibility folder picker for restricted WebViews">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+              </svg>
+              Compatibility Picker
+            </button>
+          </div>
+          <div style="font-size:0.71rem; color:var(--text-muted);">
+            You can mount both Internal Storage and SD Card together into one unified gallery.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HIDDEN FALLBACK FOLDER INPUT -->
+    <input type="file" id="fallbackFolderInput" webkitdirectory directory multiple accept=".psd" style="display:none;" />
+
+    <!-- SCAN PROGRESS BANNER -->
+    <div id="scanBanner" class="scan-banner">
+      <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+        <div class="spinner"></div>
+        <div style="min-width:0;">
+          <div id="scanTitle" style="font-size:0.85rem; font-weight:700;">Scanning storage for .psd files...</div>
+          <div id="scanSub" style="font-size:0.74rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Traversing subdirectories...</div>
+        </div>
+      </div>
+      <span id="scanCounter" style="font-family:var(--font-mono); font-size:0.8rem; color:var(--accent-sky); font-weight:700;">0 PSDs</span>
+    </div>
+
+    <!-- STORAGE STATS -->
+    <section class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">.PSD Files Found</div>
+        <div id="statTotalPsds" class="stat-val blue">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total .PSD Size</div>
+        <div id="statTotalBytes" class="stat-val">0 B</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Folders Scanned</div>
+        <div id="statFoldersScanned" class="stat-val">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Non-PSD Skipped</div>
+        <div id="statNonPsdIgnored" class="stat-val" style="color:var(--text-secondary);">0</div>
+      </div>
+    </section>
+
+    <!-- STORAGE SOURCE FILTER PILLS & BULK SELECT -->
+    <section class="filter-row">
+      <div id="sourcePills" class="filter-pills">
+        <button class="pill active" data-source="ALL">All Storage</button>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="btnSelectAll" class="btn btn-secondary" style="min-height:34px; padding:5px 12px; font-size:0.78rem;">
+          Select All
+        </button>
+      </div>
+    </section>
+
+    <!-- BULK SELECTION ACTION BAR -->
+    <div id="bulkBar" class="bulk-bar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span id="bulkCountLabel" style="font-size:0.86rem; font-weight:700; color:#93c5fd;">0 files selected</span>
+        <button id="btnDeselectAll" class="btn btn-secondary" style="min-height:32px; padding:4px 10px; font-size:0.76rem;">
+          Clear Selection
+        </button>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="btnBulkDelete" class="btn btn-danger-solid" style="min-height:34px; padding:6px 14px; font-size:0.8rem;">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+          </svg>
+          Delete Selected Files
+        </button>
+      </div>
+    </div>
+
+    <!-- SEARCH, SORT & VIEW TOOLBAR -->
+    <section class="toolbar">
+      <div class="search-wrap">
+        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="search" id="searchInput" class="search-input" placeholder="Search .psd files by name or folder path..." />
+      </div>
+
+      <select id="sortSelect" class="select-input" aria-label="Sort PSD files">
+        <option value="name-asc">Sort: Name (A → Z)</option>
+        <option value="name-desc">Sort: Name (Z → A)</option>
+        <option value="size-desc">Sort: Largest Size</option>
+        <option value="size-asc">Sort: Smallest Size</option>
+        <option value="date-desc">Sort: Newest Modified</option>
+        <option value="dim-desc">Sort: Highest Resolution</option>
+      </select>
+
+      <div style="display:flex; gap:6px;">
+        <button id="btnViewGrid" class="btn btn-secondary btn-icon active" title="Grid View">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+        </button>
+        <button id="btnViewList" class="btn btn-secondary btn-icon" title="List View">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <circle cx="4" cy="6" r="1"></circle>
+            <circle cx="4" cy="12" r="1"></circle>
+            <circle cx="4" cy="18" r="1"></circle>
+          </svg>
+        </button>
+        <button id="btnLoadSamples" class="btn btn-secondary" style="font-size:0.78rem; padding:8px 12px;" title="Reload built-in synthetic .psd test files">
+          + Sample PSDs
+        </button>
+      </div>
+    </section>
+
+    <!-- GALLERY SECTION -->
+    <section>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="empty-icon">
+          <svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+          </svg>
+        </div>
+        <h2 style="font-size:1.08rem; font-weight:700; margin-bottom:6px;">No .PSD Files Loaded</h2>
+        <p style="font-size:0.85rem; color:var(--text-secondary); max-width:460px; margin:0 auto 18px;">
+          Tap <strong>"Add Internal / SD Card"</strong> above to scan your device storage or SD card exclusively for <code>.psd</code> files, or load built-in sample PSD files to test immediately.
+        </p>
+        <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+          <button id="btnEmptyMount" class="btn btn-primary">Scan Device / SD Card</button>
+          <button id="btnEmptySamples" class="btn btn-secondary">Load Sample .PSD Files</button>
+        </div>
+      </div>
+
+      <div id="psdGrid" class="psd-grid"></div>
+    </section>
+  </main>
+
+  <!-- ==========================================================================
+       FULL-SCREEN STUDIO LIGHTBOX MODAL
+       ========================================================================== -->
+  <div id="lightboxModal" class="lightbox-backdrop" role="dialog" aria-modal="true">
+    <div class="lightbox-header">
+      <div class="lightbox-title-box">
+        <div id="lbFileName" class="lightbox-title">document.psd</div>
+        <div id="lbFilePath" class="lightbox-path">/Internal Storage/Designs/document.psd</div>
+      </div>
+
+      <div class="lightbox-tools">
+        <button id="btnLbBgMode" class="btn btn-secondary" style="min-height:36px; padding:6px 11px; font-size:0.78rem;" title="Cycle Canvas Background (Checkerboard / Dark / Light)">
+          BG: Checker
+        </button>
+        <button id="btnLbRename" class="btn btn-secondary" style="min-height:36px; padding:6px 11px; font-size:0.78rem;" title="Rename .psd file on device">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Rename
+        </button>
+        <button id="btnLbDelete" class="btn btn-danger" style="min-height:36px; padding:6px 11px; font-size:0.78rem;" title="Delete .psd file from storage">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path>
+          </svg>
+          Delete
+        </button>
+        <button id="btnLbExportPng" class="btn btn-primary" style="min-height:36px; padding:6px 12px; font-size:0.78rem;" title="Export flattened preview as PNG">
+          Export PNG
+        </button>
+        <button id="btnLbClose" class="btn btn-secondary btn-icon" style="min-height:36px;" title="Close Viewer (Esc)">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="lightbox-body">
+      <!-- Interactive Canvas Viewport -->
+      <div id="canvasStage" class="canvas-stage checkerboard">
+        <div id="lbLoader" style="position:absolute; display:flex; flex-direction:column; align-items:center; gap:10px; background:rgba(19,23,34,0.92); padding:18px 24px; border-radius:14px; border:1px solid var(--border-subtle);">
+          <div class="spinner"></div>
+          <span style="font-size:0.83rem; color:#e2e8f0;">Decoding PSD Composite Binary...</span>
+        </div>
+        <canvas id="previewCanvas"></canvas>
+
+        <div class="zoom-dock">
+          <button id="btnZoomOut" class="btn btn-secondary btn-icon" style="min-height:32px; padding:3px 9px;" title="Zoom Out">−</button>
+          <span id="zoomText" class="zoom-text">100%</span>
+          <button id="btnZoomIn" class="btn btn-secondary btn-icon" style="min-height:32px; padding:3px 9px;" title="Zoom In">+</button>
+          <button id="btnZoomFit" class="btn btn-secondary" style="min-height:32px; padding:3px 9px; font-size:0.73rem;">Fit</button>
+          <button id="btnZoomActual" class="btn btn-secondary" style="min-height:32px; padding:3px 9px; font-size:0.73rem;">100%</button>
+        </div>
+      </div>
+
+      <!-- File Details & Layer Stack Inspector -->
+      <aside class="inspector-aside">
+        <div class="aside-heading">PSD File Specifications</div>
+        <div class="meta-grid">
+          <div class="meta-cell">
+            <div class="meta-key">Resolution</div>
+            <div id="metaRes" class="meta-val">-</div>
+          </div>
+          <div class="meta-cell">
+            <div class="meta-key">File Size</div>
+            <div id="metaSize" class="meta-val">-</div>
+          </div>
+          <div class="meta-cell">
+            <div class="meta-key">Color Mode</div>
+            <div id="metaMode" class="meta-val">-</div>
+          </div>
+          <div class="meta-cell">
+            <div class="meta-key">Depth / Channels</div>
+            <div id="metaDepth" class="meta-val">-</div>
+          </div>
+          <div class="meta-cell">
+            <div class="meta-key">Compression</div>
+            <div id="metaComp" class="meta-val">-</div>
+          </div>
+          <div class="meta-cell">
+            <div class="meta-key">Storage Access</div>
+            <div id="metaAccess" class="meta-val">-</div>
+          </div>
+          <div class="meta-cell span-2">
+            <div class="meta-key">Last Modified</div>
+            <div id="metaModified" class="meta-val">-</div>
+          </div>
+          <div class="meta-cell span-2">
+            <div class="meta-key">Full Device / SD Path</div>
+            <div id="metaPath" class="meta-val" style="font-family:var(--font-mono); font-size:0.74rem;">-</div>
+          </div>
+        </div>
+
+        <div class="aside-heading">Document Layers (<span id="metaLayerCount">0</span>)</div>
+        <div id="layerStack" class="layer-stack"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       RENAME FILE DIALOG MODAL
+       ========================================================================== -->
+  <div id="renameDialog" class="dialog-overlay" role="dialog" aria-modal="true">
+    <div class="dialog-card">
+      <div class="dialog-title">
+        <svg width="19" height="19" fill="none" stroke="#38bdf8" stroke-width="2.2" viewBox="0 0 24 24">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Rename .PSD File
+      </div>
+      <p id="renameDialogSub" class="dialog-desc">
+        Enter a new filename. The <code>.psd</code> extension will be preserved automatically.
+      </p>
+      <div class="dialog-input-group">
+        <input type="text" id="renameInput" class="dialog-input" placeholder="Enter new file name..." autocomplete="off" />
+        <span class="dialog-ext">.psd</span>
+      </div>
+      <div class="dialog-footer">
+        <button id="btnCancelRename" class="btn btn-secondary">Cancel</button>
+        <button id="btnConfirmRename" class="btn btn-primary">Save New Name</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       DELETE CONFIRMATION DIALOG MODAL
+       ========================================================================== -->
+  <div id="deleteDialog" class="dialog-overlay" role="dialog" aria-modal="true">
+    <div class="dialog-card">
+      <div class="dialog-title" style="color:#fb7185;">
+        <svg width="20" height="20" fill="none" stroke="#f43f5e" stroke-width="2.2" viewBox="0 0 24 24">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+        </svg>
+        <span id="deleteDialogTitle">Delete .PSD File?</span>
+      </div>
+      <p id="deleteDialogDesc" class="dialog-desc">
+        This action will permanently remove the file from your device storage. This cannot be undone.
+      </p>
+      <div id="deleteSummaryBox" class="delete-summary-box"></div>
+      <div class="dialog-footer">
+        <button id="btnCancelDelete" class="btn btn-secondary">Cancel</button>
+        <button id="btnConfirmDelete" class="btn btn-danger-solid">Permanently Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast">
+    <svg width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="2.2" viewBox="0 0 24 24" style="flex-shrink:0;">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span id="toastText">Ready</span>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * 100% OFFLINE ADOBE PHOTOSHOP (.PSD) BINARY PARSER, RENDERER & SYNTHETIC BUILDER
+     * ============================================================================
+     */
+    class OfflinePsdEngine {
+      static COLOR_MODES = {
+        0: 'Bitmap',
+        1: 'Grayscale',
+        2: 'Indexed',
+        3: 'RGB',
+        4: 'CMYK',
+        7: 'Multichannel',
+        8: 'Duotone',
+        9: 'Lab'
+      };
+
+      static COMPRESSION_MODES = {
+        0: 'Raw Uncompressed',
+        1: 'RLE (PackBits)',
+        2: 'ZIP (No Prediction)',
+        3: 'ZIP (Prediction)'
+      };
+
+      /**
+       * Fast metadata + embedded JPEG thumbnail extraction from the first 1.5MB of a .psd file.
+       */
+      static async parseHeaderAndThumbnail(file) {
+        const sliceLen = Math.min(file.size, 1536 * 1024);
+        const buffer = await file.slice(0, sliceLen).arrayBuffer();
+        const view = new DataView(buffer);
+        const bytes = new Uint8Array(buffer);
+
+        const header = this.readHeader(view);
+        if (!header.valid) {
+          throw new Error('Invalid PSD binary header');
+        }
+
+        let offset = 26;
+        if (offset + 4 > bytes.length) return { header, thumbnailUrl: null, layers: [] };
+
+        // 1. Color Mode Data
+        const colorModeLen = view.getUint32(offset, false);
+        offset += 4 + colorModeLen;
+
+        // 2. Image Resources (Extract 8BIM ID 1036 / 1033 JPEG thumbnail)
+        let thumbnailUrl = null;
+        if (offset + 4 <= bytes.length) {
+          const resourcesLen = view.getUint32(offset, false);
+          offset += 4;
+          const resourcesEnd = Math.min(bytes.length, offset + resourcesLen);
+
+          while (offset + 12 <= resourcesEnd) {
+            const sig = view.getUint32(offset, false);
+            if (sig !== 0x3842494D) break; // '8BIM'
+            offset += 4;
+
+            const resourceId = view.getUint16(offset, false);
+            offset += 2;
+
+            const nameLen = bytes[offset];
+            const paddedNameLen = (nameLen + 1) % 2 === 0 ? nameLen + 1 : nameLen + 2;
+            offset += paddedNameLen;
+
+            if (offset + 4 > resourcesEnd) break;
+            const dataSize = view.getUint32(offset, false);
+            offset += 4;
+
+            if ((resourceId === 1036 || resourceId === 1033) && dataSize > 28 && offset + dataSize <= bytes.length) {
+              const jpegStart = offset + 28;
+              const jpegEnd = offset + dataSize;
+              if (bytes[jpegStart] === 0xFF && bytes[jpegStart + 1] === 0xD8) {
+                const jpegSlice = bytes.slice(jpegStart, jpegEnd);
+                thumbnailUrl = URL.createObjectURL(new Blob([jpegSlice], { type: 'image/jpeg' }));
+              }
+            }
+
+            offset += dataSize % 2 === 0 ? dataSize : dataSize + 1;
+          }
+          offset = 26 + 4 + colorModeLen + 4 + resourcesLen;
+        }
+
+        // 3. Layer names (best-effort within initial slice)
+        const layers = this.readLayersSafe(view, bytes, offset, header.isPsb);
+
+        return { header, thumbnailUrl, layers };
+      }
+
+      static readHeader(view) {
+        if (view.byteLength < 26) return { valid: false };
+        const sig = view.getUint32(0, false);
+        if (sig !== 0x38425053) return { valid: false }; // '8BPS'
+
+        const version = view.getUint16(4, false);
+        if (version !== 1 && version !== 2) return { valid: false };
+
+        const channels = view.getUint16(12, false);
+        const height = view.getUint32(14, false);
+        const width = view.getUint32(18, false);
+        const depth = view.getUint16(22, false);
+        const colorMode = view.getUint16(24, false);
+
+        return {
+          valid: true,
+          version,
+          isPsb: version === 2,
+          channels,
+          height,
+          width,
+          depth,
+          colorMode,
+          colorModeName: this.COLOR_MODES[colorMode] || `Mode ${colorMode}`
+        };
+      }
+
+      static readLayersSafe(view, bytes, startOffset, isPsb) {
+        const layers = [];
+        try {
+          if (startOffset + 8 > bytes.length) return layers;
+          let offset = startOffset;
+          const sectionLen = isPsb
+            ? Number(view.getBigUint64(offset, false))
+            : view.getUint32(offset, false);
+          offset += isPsb ? 8 : 4;
+
+          if (sectionLen === 0 || offset + 8 > bytes.length) return layers;
+
+          const layerInfoLen = isPsb
+            ? Number(view.getBigUint64(offset, false))
+            : view.getUint32(offset, false);
+          offset += isPsb ? 8 : 4;
+
+          if (layerInfoLen === 0 || offset + 2 > bytes.length) return layers;
+
+          let layerCount = view.getInt16(offset, false);
+          offset += 2;
+          if (layerCount < 0) layerCount = Math.abs(layerCount);
+
+          const maxLayers = Math.min(layerCount, 150);
+          for (let i = 0; i < maxLayers; i++) {
+            if (offset + 18 > bytes.length) break;
+            offset += 16;
+            const numChannels = view.getUint16(offset, false);
+            offset += 2;
+
+            offset += numChannels * (isPsb ? 10 : 6);
+
+            if (offset + 16 > bytes.length) break;
+            if (view.getUint32(offset, false) !== 0x3842494D) break;
+
+            const flags = bytes[offset + 10];
+            const visible = (flags & 0x02) === 0;
+            const extraLen = view.getUint32(offset + 12, false);
+            offset += 16;
+
+            const extraEnd = offset + extraLen;
+            if (extraEnd > bytes.length) break;
+
+            const maskLen = view.getUint32(offset, false);
+            offset += 4 + maskLen;
+
+            const rangesLen = view.getUint32(offset, false);
+            offset += 4 + rangesLen;
+
+            const nameLen = bytes[offset];
+            let name = '';
+            for (let c = 0; c < nameLen; c++) {
+              name += String.fromCharCode(bytes[offset + 1 + c]);
+            }
+            layers.push({
+              name: name.trim() || `Layer ${i + 1}`,
+              visible
+            });
+
+            offset = extraEnd;
+          }
+        } catch (_) {}
+        return layers;
+      }
+
+      /**
+       * Full-resolution composite image decoder (Raw Uncompressed & PackBits RLE)
+       */
+      static async decodeFullComposite(file) {
+        const buffer = await file.arrayBuffer();
+        const view = new DataView(buffer);
+        const bytes = new Uint8Array(buffer);
+
+        const header = this.readHeader(view);
+        if (!header.valid) {
+          throw new Error('File is not a valid Adobe Photoshop (.psd) document.');
+        }
+
+        let offset = 26;
+
+        // 1. Color Mode Data
+        const colorModeLen = view.getUint32(offset, false);
+        const palette = colorModeLen > 0 ? bytes.slice(offset + 4, offset + 4 + colorModeLen) : null;
+        offset += 4 + colorModeLen;
+
+        // 2. Image Resources
+        const resourcesLen = view.getUint32(offset, false);
+        offset += 4 + resourcesLen;
+
+        // 3. Layer and Mask Information
+        const layers = this.readLayersSafe(view, bytes, offset, header.isPsb);
+        const layerMaskLen = header.isPsb
+          ? Number(view.getBigUint64(offset, false))
+          : view.getUint32(offset, false);
+        offset += (header.isPsb ? 8 : 4) + layerMaskLen;
+
+        // 4. Composite Image Data Section
+        if (offset + 2 > bytes.length) {
+          throw new Error('Composite image data missing in PSD file.');
+        }
+
+        const compression = view.getUint16(offset, false);
+        offset += 2;
+
+        const { width, height, channels, depth, colorMode } = header;
+        const compressionName = this.COMPRESSION_MODES[compression] || `Compression ${compression}`;
+
+        if (width === 0 || height === 0) {
+          throw new Error('Invalid zero-pixel PSD dimensions.');
+        }
+
+        const bytesPerSample = depth === 16 ? 2 : depth === 32 ? 4 : 1;
+        const rowBytes = depth === 1 ? Math.ceil(width / 8) : width * bytesPerSample;
+        const planeBytes = rowBytes * height;
+        const planesNeeded = Math.min(channels, 4);
+        const planes = [];
+
+        if (compression === 0) {
+          for (let c = 0; c < planesNeeded; c++) {
+            const start = offset + c * planeBytes;
+            if (start + planeBytes > bytes.length) break;
+            planes.push(bytes.subarray(start, start + planeBytes));
+          }
+        } else if (compression === 1) {
+          const totalScanlines = height * channels;
+          const countSize = header.isPsb ? 4 : 2;
+          const tableBytes = totalScanlines * countSize;
+
+          if (offset + tableBytes > bytes.length) {
+            throw new Error('Truncated RLE scanline table.');
+          }
+
+          const lineLengths = new Uint32Array(totalScanlines);
+          for (let i = 0; i < totalScanlines; i++) {
+            lineLengths[i] = header.isPsb
+              ? view.getUint32(offset + i * 4, false)
+              : view.getUint16(offset + i * 2, false);
+          }
+
+          let ptr = offset + tableBytes;
+          for (let c = 0; c < channels; c++) {
+            if (c < planesNeeded) {
+              const plane = new Uint8Array(planeBytes);
+              let dst = 0;
+              for (let y = 0; y < height; y++) {
+                const len = lineLengths[c * height + y];
+                const end = Math.min(bytes.length, ptr + len);
+                dst = this.unpackBitsRow(bytes, ptr, end, plane, dst, rowBytes);
+                ptr = end;
+              }
+              planes.push(plane);
+            } else {
+              for (let y = 0; y < height; y++) {
+                ptr += lineLengths[c * height + y];
+              }
+            }
+          }
+        } else {
+          throw new Error(`Unsupported compression (${compressionName}). Re-save PSD with "Maximize Compatibility" enabled.`);
+        }
+
+        const imageData = this.buildImageData(planes, width, height, depth, colorMode, palette);
+        return { header, compressionName, layers, imageData };
+      }
+
+      static unpackBitsRow(src, start, end, dst, dstStart, rowBytes) {
+        let s = start;
+        let d = dstStart;
+        const limit = dstStart + rowBytes;
+
+        while (s < end && d < limit) {
+          const n = (src[s++] << 24) >> 24;
+          if (n >= 0) {
+            const count = n + 1;
+            for (let i = 0; i < count && s < end && d < limit; i++) {
+              dst[d++] = src[s++];
+            }
+          } else if (n !== -128) {
+            const count = -n + 1;
+            const val = s < end ? src[s++] : 0;
+            for (let i = 0; i < count && d < limit; i++) {
+              dst[d++] = val;
+            }
+          }
+        }
+        return limit;
+      }
+
+      static buildImageData(planes, width, height, depth, colorMode, palette) {
+        const pixels = width * height;
+        const rgba = new Uint8ClampedArray(pixels * 4);
+
+        const sample = (plane, i) => {
+          if (!plane) return 255;
+          if (depth === 8) return plane[i];
+          if (depth === 16) return plane[i * 2];
+          if (depth === 32) {
+            const dv = new DataView(plane.buffer, plane.byteOffset + i * 4, 4);
+            const f = dv.getFloat32(0, false);
+            return Math.max(0, Math.min(255, Math.round(Math.pow(Math.max(0, f), 1 / 2.2) * 255)));
+          }
+          return plane[i];
+        };
+
+        if (colorMode === 3) {
+          const [pR, pG, pB, pA] = [planes[0], planes[1] || planes[0], planes[2] || planes[0], planes[3] || null];
+          for (let i = 0; i < pixels; i++) {
+            const o = i * 4;
+            rgba[o] = sample(pR, i);
+            rgba[o + 1] = sample(pG, i);
+            rgba[o + 2] = sample(pB, i);
+            rgba[o + 3] = pA ? sample(pA, i) : 255;
+          }
+        } else if (colorMode === 4) {
+          const [pC, pM, pY, pK] = [planes[0], planes[1] || planes[0], planes[2] || planes[0], planes[3] || planes[0]];
+          for (let i = 0; i < pixels; i++) {
+            const c = (255 - sample(pC, i)) / 255;
+            const m = (255 - sample(pM, i)) / 255;
+            const y = (255 - sample(pY, i)) / 255;
+            const k = (255 - sample(pK, i)) / 255;
+            const o = i * 4;
+            rgba[o] = Math.round(255 * (1 - c) * (1 - k));
+            rgba[o + 1] = Math.round(255 * (1 - m) * (1 - k));
+            rgba[o + 2] = Math.round(255 * (1 - y) * (1 - k));
+            rgba[o + 3] = 255;
+          }
+        } else if (colorMode === 1 || colorMode === 8) {
+          const [pG, pA] = [planes[0], planes[1] || null];
+          for (let i = 0; i < pixels; i++) {
+            const g = sample(pG, i);
+            const o = i * 4;
+            rgba[o] = g;
+            rgba[o + 1] = g;
+            rgba[o + 2] = g;
+            rgba[o + 3] = pA ? sample(pA, i) : 255;
+          }
+        } else if (colorMode === 2 && palette && palette.length >= 768) {
+          const pI = planes[0];
+          for (let i = 0; i < pixels; i++) {
+            const idx = pI[i];
+            const o = i * 4;
+            rgba[o] = palette[idx];
+            rgba[o + 1] = palette[256 + idx];
+            rgba[o + 2] = palette[512 + idx];
+            rgba[o + 3] = 255;
+          }
+        } else if (colorMode === 0) {
+          const pB = planes[0];
+          const rowBytes = Math.ceil(width / 8);
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const bit = (pB[y * rowBytes + (x >> 3)] >> (7 - (x & 7))) & 1;
+              const v = bit ? 0 : 255;
+              const o = (y * width + x) * 4;
+              rgba[o] = v;
+              rgba[o + 1] = v;
+              rgba[o + 2] = v;
+              rgba[o + 3] = 255;
+            }
+          }
+        } else {
+          const [p0, p1, p2] = [planes[0], planes[1] || planes[0], planes[2] || planes[0]];
+          for (let i = 0; i < pixels; i++) {
+            const o = i * 4;
+            rgba[o] = sample(p0, i);
+            rgba[o + 1] = sample(p1, i);
+            rgba[o + 2] = sample(p2, i);
+            rgba[o + 3] = 255;
+          }
+        }
+
+        return new ImageData(rgba, width, height);
+      }
+
+      /**
+       * Generates valid binary .PSD File objects in-memory for instant out-of-the-box testing.
+       */
+      static createSyntheticPsdFile(filename, width, height, styleType, lastModifiedOffsetMs = 0) {
+        const channels = 4; // RGBA
+        const pixels = width * height;
+        const planeR = new Uint8Array(pixels);
+        const planeG = new Uint8Array(pixels);
+        const planeB = new Uint8Array(pixels);
+        const planeA = new Uint8Array(pixels);
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = y * width + x;
+            const nx = x / width;
+            const ny = y / height;
+            const cx = nx - 0.5;
+            const cy = ny - 0.5;
+            const dist = Math.hypot(cx, cy);
+
+            if (styleType === 'poster') {
+              const inBounds = Math.abs(cx) < 0.44 && Math.abs(cy) < 0.44;
+              planeA[idx] = inBounds ? 255 : 0;
+              planeR[idx] = Math.round(35 + nx * 195);
+              planeG[idx] = Math.round(65 + (1 - ny) * 145);
+              planeB[idx] = Math.round(215 - nx * 95);
+              if (dist < 0.22) {
+                planeR[idx] = 255;
+                planeG[idx] = Math.round(180 + ny * 60);
+                planeB[idx] = 65;
+              }
+            } else if (styleType === 'badge') {
+              const alpha = dist <= 0.42 ? 255 : dist <= 0.44 ? Math.round((0.44 - dist) / 0.02 * 255) : 0;
+              planeA[idx] = alpha;
+              planeR[idx] = Math.round(16 + ny * 40);
+              planeG[idx] = Math.round(185 - nx * 65);
+              planeB[idx] = Math.round(129 + nx * 110);
+              if (Math.abs(cx + cy) < 0.05 && dist < 0.28) {
+                planeR[idx] = 248;
+                planeG[idx] = 250;
+                planeB[idx] = 252;
+              }
+            } else {
+              planeA[idx] = 255;
+              const grid = (x % 32 === 0 || y % 32 === 0);
+              planeR[idx] = grid ? 56 : Math.round(18 + nx * 35);
+              planeG[idx] = grid ? 189 : Math.round(25 + ny * 45);
+              planeB[idx] = grid ? 248 : Math.round(52 + nx * 85);
+              if (Math.abs(cy) < 0.14 && Math.abs(cx) < 0.36) {
+                planeR[idx] = 99;
+                planeG[idx] = 102;
+                planeB[idx] = 241;
+              }
+            }
+          }
+        }
+
+        const totalSize = 26 + 4 + 4 + 4 + 2 + pixels * 4;
+        const buffer = new ArrayBuffer(totalSize);
+        const view = new DataView(buffer);
+        const out = new Uint8Array(buffer);
+
+        view.setUint32(0, 0x38425053, false);
+        view.setUint16(4, 1, false);
+        view.setUint16(12, channels, false);
+        view.setUint32(14, height, false);
+        view.setUint32(18, width, false);
+        view.setUint16(22, 8, false);
+        view.setUint16(24, 3, false);
+
+        view.setUint32(26, 0, false);
+        view.setUint32(30, 0, false);
+        view.setUint32(34, 0, false);
+        view.setUint16(38, 0, false);
+
+        let ptr = 40;
+        out.set(planeR, ptr); ptr += pixels;
+        out.set(planeG, ptr); ptr += pixels;
+        out.set(planeB, ptr); ptr += pixels;
+        out.set(planeA, ptr);
+
+        return new File([buffer], filename, {
+          type: 'image/vnd.adobe.photoshop',
+          lastModified: Date.now() - lastModifiedOffsetMs
+        });
+      }
+    }
+
+    /**
+     * ============================================================================
+     * DYNAMIC CONTENT-BASED THEME ENGINE
+     * ============================================================================
+     */
+    function applyDynamicThemeFromImageData(imageData) {
+      const data = imageData.data;
+      let rSum = 0, gSum = 0, bSum = 0, count = 0;
+
+      const step = Math.max(1, Math.floor(data.length / 4 / 800));
+      for (let i = 0; i < data.length; i += step * 4) {
+        const a = data[i + 3];
+        if (a < 128) continue;
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        if ((r < 30 && g < 30 && b < 30) || (r > 225 && g > 225 && b > 225)) continue;
+        rSum += r;
+        gSum += g;
+        bSum += b;
+        count++;
+      }
+
+      if (count < 10) return;
+
+      const rDom = Math.round(rSum / count);
+      const gDom = Math.round(gSum / count);
+      const bDom = Math.round(bSum / count);
+
+      const dominantHex = `#${((1 << 24) + (rDom << 16) + (gDom << 8) + bDom).toString(16).slice(1)}`;
+      const rSky = Math.min(255, rDom + 60);
+      const gSky = Math.min(255, gDom + 60);
+      const bSky = Math.min(255, bDom + 60);
+      const skyHex = `#${((1 << 24) + (rSky << 16) + (gSky << 8) + bSky).toString(16).slice(1)}`;
+
+      document.documentElement.style.setProperty('--accent-blue', dominantHex);
+      document.documentElement.style.setProperty('--accent-sky', skyHex);
+    }
+
+    /**
+     * ============================================================================
+     * APPLICATION STATE & FILE SYSTEM CONTROLLER
+     * ============================================================================
+     */
+    const state = {
+      items: [],
+      seenKeys: new Set(),
+      mountedRoots: [],
+      activeSourceFilter: 'ALL',
+      selectedIds: new Set(),
+      foldersScanned: 0,
+      nonPsdSkipped: 0,
+      viewMode: 'grid',
+      searchQuery: '',
+      sortBy: 'name-asc',
+      activeLightboxItem: null,
+      renameTargetItem: null,
+      deleteTargetItems: [],
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      bgModeIndex: 0
+    };
+
+    const BG_MODES = [
+      { key: 'checkerboard', label: 'BG: Checker' },
+      { key: 'bg-dark', label: 'BG: Dark' },
+      { key: 'bg-light', label: 'BG: Light' }
+    ];
+
+    const el = {
+      btnHeaderAddDrive: document.getElementById('btnHeaderAddDrive'),
+      btnMountReadWrite: document.getElementById('btnMountReadWrite'),
+      btnMountFallback: document.getElementById('btnMountFallback'),
+      btnEmptyMount: document.getElementById('btnEmptyMount'),
+      btnEmptySamples: document.getElementById('btnEmptySamples'),
+      btnLoadSamples: document.getElementById('btnLoadSamples'),
+      fallbackFolderInput: document.getElementById('fallbackFolderInput'),
+      mountedRootsList: document.getElementById('mountedRootsList'),
+      scanBanner: document.getElementById('scanBanner'),
+      scanTitle: document.getElementById('scanTitle'),
+      scanSub: document.getElementById('scanSub'),
+      scanCounter: document.getElementById('scanCounter'),
+      statTotalPsds: document.getElementById('statTotalPsds'),
+      statTotalBytes: document.getElementById('statTotalBytes'),
+      statFoldersScanned: document.getElementById('statFoldersScanned'),
+      statNonPsdIgnored: document.getElementById('statNonPsdIgnored'),
+      sourcePills: document.getElementById('sourcePills'),
+      btnSelectAll: document.getElementById('btnSelectAll'),
+      bulkBar: document.getElementById('bulkBar'),
+      bulkCountLabel: document.getElementById('bulkCountLabel'),
+      btnDeselectAll: document.getElementById('btnDeselectAll'),
+      btnBulkDelete: document.getElementById('btnBulkDelete'),
+      searchInput: document.getElementById('searchInput'),
+      sortSelect: document.getElementById('sortSelect'),
+      btnViewGrid: document.getElementById('btnViewGrid'),
+      btnViewList: document.getElementById('btnViewList'),
+      emptyState: document.getElementById('emptyState'),
+      psdGrid: document.getElementById('psdGrid'),
+      lightboxModal: document.getElementById('lightboxModal'),
+      lbFileName: document.getElementById('lbFileName'),
+      lbFilePath: document.getElementById('lbFilePath'),
+      btnLbBgMode: document.getElementById('btnLbBgMode'),
+      btnLbRename: document.getElementById('btnLbRename'),
+      btnLbDelete: document.getElementById('btnLbDelete'),
+      btnLbExportPng: document.getElementById('btnLbExportPng'),
+      btnLbClose: document.getElementById('btnLbClose'),
+      canvasStage: document.getElementById('canvasStage'),
+      lbLoader: document.getElementById('lbLoader'),
+      previewCanvas: document.getElementById('previewCanvas'),
+      btnZoomOut: document.getElementById('btnZoomOut'),
+      btnZoomIn: document.getElementById('btnZoomIn'),
+      btnZoomFit: document.getElementById('btnZoomFit'),
+      btnZoomActual: document.getElementById('btnZoomActual'),
+      zoomText: document.getElementById('zoomText'),
+      metaRes: document.getElementById('metaRes'),
+      metaSize: document.getElementById('metaSize'),
+      metaMode: document.getElementById('metaMode'),
+      metaDepth: document.getElementById('metaDepth'),
+      metaComp: document.getElementById('metaComp'),
+      metaAccess: document.getElementById('metaAccess'),
+      metaModified: document.getElementById('metaModified'),
+      metaPath: document.getElementById('metaPath'),
+      metaLayerCount: document.getElementById('metaLayerCount'),
+      layerStack: document.getElementById('layerStack'),
+      renameDialog: document.getElementById('renameDialog'),
+      renameDialogSub: document.getElementById('renameDialogSub'),
+      renameInput: document.getElementById('renameInput'),
+      btnCancelRename: document.getElementById('btnCancelRename'),
+      btnConfirmRename: document.getElementById('btnConfirmRename'),
+      deleteDialog: document.getElementById('deleteDialog'),
+      deleteDialogTitle: document.getElementById('deleteDialogTitle'),
+      deleteDialogDesc: document.getElementById('deleteDialogDesc'),
+      deleteSummaryBox: document.getElementById('deleteSummaryBox'),
+      btnCancelDelete: document.getElementById('btnCancelDelete'),
+      btnConfirmDelete: document.getElementById('btnConfirmDelete'),
+      toast: document.getElementById('toast'),
+      toastText: document.getElementById('toastText')
+    };
+
+    let toastTimeout = null;
+    function showToast(msg) {
+      el.toastText.textContent = msg;
+      el.toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => el.toast.classList.remove('show'), 3600);
+    }
+
+    function formatSize(bytes) {
+      if (!bytes || bytes <= 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return `${(bytes / Math.pow(1024, i)).toFixed(i > 1 ? 2 : 1)} ${units[i]}`;
+    }
+
+    function formatDate(ts) {
+      if (!ts) return 'Unknown';
+      return new Date(ts).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function updateStatsAndPills() {
+      el.statTotalPsds.textContent = state.items.length.toLocaleString();
+      const totalBytes = state.items.reduce((sum, item) => sum + item.size, 0);
+      el.statTotalBytes.textContent = formatSize(totalBytes);
+      el.statFoldersScanned.textContent = state.foldersScanned.toLocaleString();
+      el.statNonPsdIgnored.textContent = state.nonPsdSkipped.toLocaleString();
+
+      el.mountedRootsList.innerHTML = `<span style="font-size:0.75rem; color:var(--text-muted);">Mounted Drives:</span>`;
+      if (state.mountedRoots.length === 0) {
+        el.mountedRootsList.innerHTML += `<span style="font-size:0.75rem; color:var(--text-secondary);">None yet</span>`;
+      } else {
+        state.mountedRoots.forEach(root => {
+          const chip = document.createElement('span');
+          chip.className = `root-chip ${root.isWritable ? '' : 'readonly'}`;
+          chip.textContent = `${root.label} (${root.isWritable ? 'Read/Write' : 'Session'})`;
+          el.mountedRootsList.appendChild(chip);
+        });
+      }
+
+      const sources = ['ALL', ...Array.from(new Set(state.items.map(i => i.rootLabel)))];
+      if (!sources.includes(state.activeSourceFilter)) {
+        state.activeSourceFilter = 'ALL';
+      }
+
+      el.sourcePills.innerHTML = '';
+      sources.forEach(src => {
+        const count = src === 'ALL'
+          ? state.items.length
+          : state.items.filter(i => i.rootLabel === src).length;
+        const pill = document.createElement('button');
+        pill.className = `pill ${state.activeSourceFilter === src ? 'active' : ''}`;
+        pill.textContent = src === 'ALL' ? `All Storage (${count})` : `${src} (${count})`;
+        pill.addEventListener('click', () => {
+          state.activeSourceFilter = src;
+          updateStatsAndPills();
+          renderGallery();
+        });
+        el.sourcePills.appendChild(pill);
+      });
+
+      updateBulkBar();
+    }
+
+    function updateBulkBar() {
+      const existingIds = new Set(state.items.map(i => i.id));
+      for (const id of Array.from(state.selectedIds)) {
+        if (!existingIds.has(id)) state.selectedIds.delete(id);
+      }
+
+      const count = state.selectedIds.size;
+      if (count > 0) {
+        el.bulkBar.classList.add('active');
+        el.bulkCountLabel.textContent = `${count} .psd file${count > 1 ? 's' : ''} selected`;
+      } else {
+        el.bulkBar.classList.remove('active');
+      }
+    }
+
+    /**
+     * ============================================================================
+     * STORAGE MOUNT & SCANNER
+     * ============================================================================
+     */
+    async function mountStorageReadWrite() {
+      if (typeof window.showDirectoryPicker === 'function') {
+        try {
+          const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+          await scanDirectoryHandle(dirHandle, true);
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;
+          try {
+            const readHandle = await window.showDirectoryPicker({ mode: 'read' });
+            await scanDirectoryHandle(readHandle, false);
+          } catch (err2) {
+            if (err2 && err2.name === 'AbortError') return;
+            showToast('Opening compatibility storage picker...');
+            el.fallbackFolderInput.click();
+          }
+        }
+      } else {
+        el.fallbackFolderInput.click();
+      }
+    }
+
+    async function scanDirectoryHandle(rootHandle, isWritable) {
+      const rootLabel = rootHandle.name || 'Device Storage';
+      if (!state.mountedRoots.some(r => r.label === rootLabel)) {
+        state.mountedRoots.push({ label: rootLabel, isWritable });
+      }
+
+      el.scanBanner.classList.add('active');
+      el.scanTitle.textContent = `Scanning "${rootLabel}" for .psd files...`;
+      let foundCount = 0;
+
+      async function walk(dirHandle, parentPath) {
+        state.foldersScanned++;
+        if (state.foldersScanned % 5 === 0) {
+          el.scanSub.textContent = parentPath;
+          updateStatsAndPills();
+        }
+
+        try {
+          for await (const [entryName, handle] of dirHandle.entries()) {
+            if (entryName.startsWith('.')) continue;
+            if (entryName === 'Android' && parentPath === rootLabel) continue;
+
+            const fullPath = `${parentPath}/${entryName}`;
+
+            if (handle.kind === 'directory') {
+              await walk(handle, fullPath);
+            } else if (handle.kind === 'file') {
+              if (entryName.toLowerCase().endsWith('.psd')) {
+                const uniqueKey = `${rootLabel}::${fullPath}`;
+                if (!state.seenKeys.has(uniqueKey)) {
+                  const file = await handle.getFile();
+                  await addPsdItem({
+                    file,
+                    path: fullPath,
+                    rootLabel,
+                    isWritable,
+                    isSample: false,
+                    fileHandle: handle,
+                    parentDirHandle: dirHandle
+                  });
+                  foundCount++;
+                  el.scanCounter.textContent = `${state.items.length} PSDs`;
+                }
+              } else {
+                state.nonPsdSkipped++;
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      await walk(rootHandle, rootLabel);
+
+      el.scanBanner.classList.remove('active');
+      updateStatsAndPills();
+      renderGallery();
+
+      if (foundCount > 0) {
+        showToast(`Mounted "${rootLabel}": ${foundCount} .psd file${foundCount > 1 ? 's' : ''} loaded.`);
+      } else {
+        showToast(`Scan finished for "${rootLabel}". No new .psd files found.`);
+      }
+    }
+
+    async function handleFallbackFolderFiles(fileList) {
+      if (!fileList || fileList.length === 0) return;
+
+      const firstRel = fileList[0].webkitRelativePath || fileList[0].name;
+      const rootLabel = firstRel.includes('/') ? firstRel.split('/')[0] : 'Selected Folder';
+
+      if (!state.mountedRoots.some(r => r.label === rootLabel)) {
+        state.mountedRoots.push({ label: rootLabel, isWritable: false });
+      }
+
+      el.scanBanner.classList.add('active');
+      el.scanTitle.textContent = `Filtering .psd files in "${rootLabel}"...`;
+
+      const seenFolders = new Set();
+      let foundCount = 0;
+
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        const relPath = file.webkitRelativePath || `${rootLabel}/${file.name}`;
+        const folderPath = relPath.includes('/') ? relPath.substring(0, relPath.lastIndexOf('/')) : rootLabel;
+
+        if (!seenFolders.has(folderPath)) {
+          seenFolders.add(folderPath);
+          state.foldersScanned++;
+        }
+
+        if (file.name.toLowerCase().endsWith('.psd')) {
+          const uniqueKey = `${rootLabel}::${relPath}`;
+          if (!state.seenKeys.has(uniqueKey)) {
+            el.scanSub.textContent = relPath;
+            await addPsdItem({
+              file,
+              path: relPath,
+              rootLabel,
+              isWritable: false,
+              isSample: false,
+              fileHandle: null,
+              parentDirHandle: null
+            });
+            foundCount++;
+            el.scanCounter.textContent = `${state.items.length} PSDs`;
+          }
+        } else {
+          state.nonPsdSkipped++;
+        }
+
+        if (i % 40 === 0) {
+          updateStatsAndPills();
+          await new Promise(r => setTimeout(r, 0));
+        }
+      }
+
+      el.scanBanner.classList.remove('active');
+      updateStatsAndPills();
+      renderGallery();
+      showToast(`Loaded ${foundCount} .psd file${foundCount !== 1 ? 's' : ''} from "${rootLabel}".`);
+    }
+
+    async function loadBuiltInSamplePsds() {
+      const rootLabel = 'Sample Vault';
+      if (!state.mountedRoots.some(r => r.label === rootLabel)) {
+        state.mountedRoots.push({ label: rootLabel, isWritable: false });
+      }
+
+      const samples = [
+        { name: 'Cyber_Studio_Poster_2026.psd', w: 640, h: 480, style: 'poster', offset: 120000 },
+        { name: 'Emerald_App_Icon_Master.psd', w: 512, h: 512, style: 'badge', offset: 3600000 },
+        { name: 'UI_Blueprint_Wireframe.psd', w: 800, h: 450, style: 'grid', offset: 86400000 }
+      ];
+
+      let added = 0;
+      for (const s of samples) {
+        const path = `${rootLabel}/Mockups/${s.name}`;
+        const uniqueKey = `${rootLabel}::${path}`;
+        if (state.seenKeys.has(uniqueKey)) continue;
+
+        const file = OfflinePsdEngine.createSyntheticPsdFile(s.name, s.w, s.h, s.style, s.offset);
+        await addPsdItem({
+          file,
+          path,
+          rootLabel,
+          isWritable: false,
+          isSample: true,
+          fileHandle: null,
+          parentDirHandle: null
+        });
+
+        const item = state.items[state.items.length - 1];
+        await generateCanvasThumbnailForItem(item);
+        added++;
+      }
+
+      state.foldersScanned += added > 0 ? 1 : 0;
+      updateStatsAndPills();
+      renderGallery();
+      if (added > 0) {
+        showToast(`Loaded ${added} sample .psd files for instant preview, rename & delete testing.`);
+      } else {
+        showToast('Sample .psd files are already loaded.');
+      }
+    }
+
+    async function addPsdItem({ file, path, rootLabel, isWritable, isSample, fileHandle, parentDirHandle }) {
+      const uniqueKey = `${rootLabel}::${path}`;
+      state.seenKeys.add(uniqueKey);
+
+      let header = null;
+      let thumbnailUrl = null;
+      let layers = [];
+
+      try {
+        const parsed = await OfflinePsdEngine.parseHeaderAndThumbnail(file);
+        header = parsed.header;
+        thumbnailUrl = parsed.thumbnailUrl;
+        layers = parsed.layers;
+      } catch (_) {
+        header = { valid: false, width: 0, height: 0, depth: 8, channels: 0, colorModeName: 'PSD' };
+      }
+
+      state.items.push({
+        id: `psd_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        name: file.name,
+        size: file.size,
+        lastModified: file.lastModified || Date.now(),
+        path,
+        rootLabel,
+        isWritable,
+        isSample,
+        file,
+        fileHandle,
+        parentDirHandle,
+        header,
+        thumbnailUrl,
+        layers
+      });
+    }
+
+    async function generateCanvasThumbnailForItem(item) {
+      try {
+        const decoded = await OfflinePsdEngine.decodeFullComposite(item.file);
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = decoded.header.width;
+        tempCanvas.height = decoded.header.height;
+        tempCanvas.getContext('2d').putImageData(decoded.imageData, 0, 0);
+
+        const thumbCanvas = document.createElement('canvas');
+        const scale = Math.min(1, 320 / Math.max(tempCanvas.width, tempCanvas.height));
+        thumbCanvas.width = Math.max(1, Math.round(tempCanvas.width * scale));
+        thumbCanvas.height = Math.max(1, Math.round(tempCanvas.height * scale));
+        thumbCanvas.getContext('2d').drawImage(tempCanvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+
+        await new Promise(resolve => {
+          thumbCanvas.toBlob(blob => {
+            if (blob) {
+              if (item.thumbnailUrl) URL.revokeObjectURL(item.thumbnailUrl);
+              item.thumbnailUrl = URL.createObjectURL(blob);
+            }
+            resolve();
+          }, 'image/png');
+        });
+      } catch (_) {}
+    }
+
+    /**
+     * ============================================================================
+     * GALLERY RENDERING
+     * ============================================================================
+     */
+    function getFilteredSortedItems() {
+      const q = state.searchQuery.trim().toLowerCase();
+      const filtered = state.items.filter(item => {
+        const matchesSource = state.activeSourceFilter === 'ALL' || item.rootLabel === state.activeSourceFilter;
+        const matchesQuery = !q || item.name.toLowerCase().includes(q) || item.path.toLowerCase().includes(q);
+        return matchesSource && matchesQuery;
+      });
+
+      filtered.sort((a, b) => {
+        switch (state.sortBy) {
+          case 'name-desc':
+            return b.name.localeCompare(a.name);
+          case 'size-desc':
+            return b.size - a.size;
+          case 'size-asc':
+            return a.size - b.size;
+          case 'date-desc':
+            return (b.lastModified || 0) - (a.lastModified || 0);
+          case 'dim-desc': {
+            const areaA = (a.header?.width || 0) * (a.header?.height || 0);
+            const areaB = (b.header?.width || 0) * (b.header?.height || 0);
+            return areaB - areaA;
+          }
+          case 'name-asc':
+          default:
+            return a.name.localeCompare(b.name);
+        }
+      });
+
+      return filtered;
+    }
+
+    function renderGallery() {
+      const filtered = getFilteredSortedItems();
+
+      if (state.items.length === 0) {
+        el.emptyState.style.display = 'block';
+        el.psdGrid.style.display = 'none';
+        return;
+      }
+
+      el.emptyState.style.display = 'none';
+      el.psdGrid.style.display = 'grid';
+      el.psdGrid.classList.toggle('list-view', state.viewMode === 'list');
+      el.psdGrid.innerHTML = '';
+
+      if (filtered.length === 0) {
+        el.psdGrid.innerHTML = `
+          <div style="grid-column:1/-1; text-align:center; padding:38px; color:var(--text-secondary); background:var(--bg-card); border-radius:16px; border:1px solid var(--border-subtle);">
+            No .psd files match "<strong>${escapeHtml(state.searchQuery)}</strong>"
+          </div>
+        `;
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+
+      filtered.forEach(item => {
+        const isSelected = state.selectedIds.has(item.id);
+        const card = document.createElement('article');
+        card.className = `psd-card ${isSelected ? 'selected' : ''}`;
+
+        const dims = item.header?.width ? `${item.header.width}×${item.header.height}` : 'PSD';
+
+        const thumbHtml = item.thumbnailUrl
+          ? `<img src="${item.thumbnailUrl}" alt="${escapeHtml(item.name)}" loading="lazy" />`
+          : `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; color:#38bdf8; gap:4px; padding:10px; text-align:center;">
+               <svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                 <polyline points="14 2 14 8 20 8"/>
+               </svg>
+               <span style="font-size:0.65rem; color:var(--text-secondary);">Click to Render</span>
+             </div>`;
+
+        card.innerHTML = `
+          <div class="card-select-wrap">
+            <input type="checkbox" class="card-checkbox" aria-label="Select ${escapeHtml(item.name)}" ${isSelected ? 'checked' : ''} />
+          </div>
+          <div class="thumb-area checkerboard">
+            ${thumbHtml}
+            <span class="storage-tag" title="${escapeHtml(item.rootLabel)}">${escapeHtml(item.rootLabel)}</span>
+            <span class="dim-tag">${dims}</span>
+          </div>
+          <div class="card-body">
+            <div class="file-title" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+            <div class="file-meta-row">
+              <span>${formatSize(item.size)}</span>
+              <span>${escapeHtml(item.header?.colorModeName || 'RGB')} • ${item.header?.depth || 8}b</span>
+            </div>
+            <div class="file-path-text" title="${escapeHtml(item.path)}">${escapeHtml(item.path)}</div>
+          </div>
+          <div class="card-actions">
+            <button type="button" class="mini-btn btn-card-rename" title="Rename file on device">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Rename
+            </button>
+            <button type="button" class="mini-btn del btn-card-delete" title="Delete file from storage">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path>
+              </svg>
+              Delete
+            </button>
+          </div>
+        `;
+
+        const checkbox = card.querySelector('.card-checkbox');
+        checkbox.addEventListener('click', (e) => e.stopPropagation());
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            state.selectedIds.add(item.id);
+            card.classList.add('selected');
+          } else {
+            state.selectedIds.delete(item.id);
+            card.classList.remove('selected');
+          }
+          updateBulkBar();
+        });
+
+        card.querySelector('.thumb-area').addEventListener('click', () => openLightbox(item));
+        card.querySelector('.card-body').addEventListener('click', () => openLightbox(item));
+
+        card.querySelector('.btn-card-rename').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openRenameDialog(item);
+        });
+
+        card.querySelector('.btn-card-delete').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openDeleteDialog([item]);
+        });
+
+        frag.appendChild(card);
+      });
+
+      el.psdGrid.appendChild(frag);
+    }
+
+    /**
+     * ============================================================================
+     * FILE RENAME & DELETE OPERATIONS
+     * ============================================================================
+     */
+    function openRenameDialog(item) {
+      state.renameTargetItem = item;
+      const baseName = item.name.replace(/\.psd$/i, '');
+      el.renameInput.value = baseName;
+      el.renameDialogSub.innerHTML = item.isWritable && item.parentDirHandle
+        ? `Renaming directly on device in <strong>${escapeHtml(item.rootLabel)}</strong>. The <code>.psd</code> extension is preserved.`
+        : `Enter a new filename for this session item. The <code>.psd</code> extension is preserved.`;
+
+      el.renameDialog.classList.add('open');
+      setTimeout(() => {
+        el.renameInput.focus();
+        el.renameInput.select();
+      }, 40);
+    }
+
+    function closeRenameDialog() {
+      el.renameDialog.classList.remove('open');
+      state.renameTargetItem = null;
+    }
+
+    async function executeRename() {
+      const item = state.renameTargetItem;
+      if (!item) return;
+
+      let rawName = el.renameInput.value.trim().replace(/\.psd$/i, '');
+      rawName = rawName.replace(/[\\/:*?"<>|]/g, '').trim();
+
+      if (!rawName) {
+        showToast('Please enter a valid filename.');
+        return;
+      }
+
+      const newFileName = `${rawName}.psd`;
+      if (newFileName === item.name) {
+        closeRenameDialog();
+        return;
+      }
+
+      const oldName = item.name;
+      const oldPath = item.path;
+      const dirPrefix = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+      const newPath = dirPrefix ? `${dirPrefix}/${newFileName}` : newFileName;
+      const newUniqueKey = `${item.rootLabel}::${newPath}`;
+
+      if (state.seenKeys.has(newUniqueKey)) {
+        showToast(`A file named "${newFileName}" already exists in this folder.`);
+        return;
+      }
+
+      el.btnConfirmRename.disabled = true;
+      el.btnConfirmRename.textContent = 'Renaming...';
+
+      try {
+        let diskRenamed = false;
+
+        if (item.isWritable && item.parentDirHandle && item.fileHandle) {
+          let existsOnDisk = false;
+          try {
+            await item.parentDirHandle.getFileHandle(newFileName);
+            existsOnDisk = true;
+          } catch (_) {}
+
+          if (existsOnDisk) {
+            throw new Error(`"${newFileName}" already exists on device storage.`);
+          }
+
+          if (typeof item.fileHandle.move === 'function') {
+            await item.fileHandle.move(newFileName);
+            item.file = await item.fileHandle.getFile();
+            diskRenamed = true;
+          } else {
+            const sourceFile = await item.fileHandle.getFile();
+            const newHandle = await item.parentDirHandle.getFileHandle(newFileName, { create: true });
+            const writable = await newHandle.createWritable();
+            await writable.write(await sourceFile.arrayBuffer());
+            await writable.close();
+
+            await item.parentDirHandle.removeEntry(oldName);
+            item.fileHandle = newHandle;
+            item.file = await newHandle.getFile();
+            diskRenamed = true;
+          }
+        } else {
+          const buf = await item.file.arrayBuffer();
+          item.file = new File([buf], newFileName, {
+            type: item.file.type || 'image/vnd.adobe.photoshop',
+            lastModified: Date.now()
+          });
+        }
+
+        state.seenKeys.delete(`${item.rootLabel}::${oldPath}`);
+        state.seenKeys.add(newUniqueKey);
+
+        item.name = newFileName;
+        item.path = newPath;
+        item.lastModified = item.file.lastModified || Date.now();
+
+        if (state.activeLightboxItem && state.activeLightboxItem.id === item.id) {
+          el.lbFileName.textContent = item.name;
+          el.lbFilePath.textContent = item.path;
+          el.metaPath.textContent = item.path;
+          el.metaModified.textContent = formatDate(item.lastModified);
+        }
+
+        closeRenameDialog();
+        renderGallery();
+        showToast(diskRenamed ? `Renamed to "${newFileName}" on device storage.` : `Renamed to "${newFileName}".`);
+      } catch (err) {
+        showToast(`Rename failed: ${err.message}`);
+      } finally {
+        el.btnConfirmRename.disabled = false;
+        el.btnConfirmRename.textContent = 'Save New Name';
+      }
+    }
+
+    function openDeleteDialog(itemsArray) {
+      if (!itemsArray || itemsArray.length === 0) return;
+      state.deleteTargetItems = itemsArray;
+
+      if (itemsArray.length === 1) {
+        const item = itemsArray[0];
+        el.deleteDialogTitle.textContent = 'Delete .PSD File?';
+        el.deleteDialogDesc.textContent = item.isWritable && item.parentDirHandle
+          ? 'This will permanently delete the .psd file from your device / SD card storage. This action cannot be undone.'
+          : 'This will permanently remove the .psd file from your active workspace.';
+        el.deleteSummaryBox.innerHTML = `
+          <div style="font-weight:700; color:#f8fafc; margin-bottom:4px; word-break:break-all;">${escapeHtml(item.name)}</div>
+          <div style="color:#94a3b8; font-family:var(--font-mono); font-size:0.74rem; word-break:break-all;">${escapeHtml(item.path)}</div>
+          <div style="color:#fda4af; font-size:0.75rem; margin-top:6px;">Size: ${formatSize(item.size)}</div>
+        `;
+      } else {
+        const totalSize = itemsArray.reduce((sum, i) => sum + i.size, 0);
+        el.deleteDialogTitle.textContent = `Delete ${itemsArray.length} .PSD Files?`;
+        el.deleteDialogDesc.textContent = `You are about to permanently delete ${itemsArray.length} selected .psd files. This action cannot be undone.`;
+        el.deleteSummaryBox.innerHTML = `
+          <div style="font-weight:700; color:#f8fafc; margin-bottom:4px;">${itemsArray.length} Selected .PSD Documents</div>
+          <div style="color:#fda4af; font-size:0.78rem;">Total Storage Freed: ${formatSize(totalSize)}</div>
+        `;
+      }
+
+      el.deleteDialog.classList.add('open');
+    }
+
+    function closeDeleteDialog() {
+      el.deleteDialog.classList.remove('open');
+      state.deleteTargetItems = [];
+    }
+
+    async function executeDelete() {
+      const targets = [...state.deleteTargetItems];
+      if (targets.length === 0) return;
+
+      el.btnConfirmDelete.disabled = true;
+      el.btnConfirmDelete.textContent = 'Deleting...';
+
+      let deletedCount = 0;
+      let diskDeletedCount = 0;
+      const deletedIds = new Set();
+
+      for (const item of targets) {
+        try {
+          if (item.isWritable && item.parentDirHandle) {
+            await item.parentDirHandle.removeEntry(item.name);
+            diskDeletedCount++;
+          }
+
+          if (item.thumbnailUrl) {
+            URL.revokeObjectURL(item.thumbnailUrl);
+          }
+
+          state.seenKeys.delete(`${item.rootLabel}::${item.path}`);
+          state.selectedIds.delete(item.id);
+          deletedIds.add(item.id);
+          deletedCount++;
+        } catch (err) {
+          showToast(`Could not delete "${item.name}": ${err.message}`);
+        }
+      }
+
+      state.items = state.items.filter(i => !deletedIds.has(i.id));
+
+      if (state.activeLightboxItem && deletedIds.has(state.activeLightboxItem.id)) {
+        closeLightbox();
+      }
+
+      el.btnConfirmDelete.disabled = false;
+      el.btnConfirmDelete.textContent = 'Permanently Delete';
+      closeDeleteDialog();
+      updateStatsAndPills();
+      renderGallery();
+
+      if (deletedCount > 0) {
+        showToast(diskDeletedCount > 0 ? `${deletedCount} .psd file${deletedCount > 1 ? 's' : ''} permanently deleted from storage.` : `${deletedCount} .psd file${deletedCount > 1 ? 's' : ''} removed.`);
+      }
+    }
+
+    /**
+     * ============================================================================
+     * FULLSCREEN STUDIO LIGHTBOX VIEWER
+     * ============================================================================
+     */
+    async function openLightbox(item) {
+      state.activeLightboxItem = item;
+      el.lightboxModal.classList.add('open');
+      el.lbLoader.style.display = 'flex';
+      el.previewCanvas.style.display = 'none';
+
+      el.lbFileName.textContent = item.name;
+      el.lbFilePath.textContent = item.path;
+      el.metaRes.textContent = item.header?.width ? `${item.header.width} × ${item.header.height} px` : '-';
+      el.metaSize.textContent = formatSize(item.size);
+      el.metaMode.textContent = item.header?.colorModeName || '-';
+      el.metaDepth.textContent = item.header ? `${item.header.depth}-bit • ${item.header.channels} ch` : '-';
+      el.metaComp.textContent = 'Decoding...';
+      el.metaAccess.textContent = item.isWritable ? 'Read / Write (Disk)' : item.isSample ? 'Built-in Sample' : 'Read-Only Session';
+      el.metaModified.textContent = formatDate(item.lastModified);
+      el.metaPath.textContent = item.path;
+      renderLayers(item.layers || []);
+
+      try {
+        const decoded = await OfflinePsdEngine.decodeFullComposite(item.file);
+
+        el.metaRes.textContent = `${decoded.header.width} × ${decoded.header.height} px`;
+        el.metaMode.textContent = decoded.header.colorModeName;
+        el.metaDepth.textContent = `${decoded.header.depth}-bit • ${decoded.header.channels} ch`;
+        el.metaComp.textContent = decoded.compressionName;
+        renderLayers(decoded.layers);
+
+        applyDynamicThemeFromImageData(decoded.imageData);
+
+        const canvas = el.previewCanvas;
+        canvas.width = decoded.header.width;
+        canvas.height = decoded.header.height;
+        canvas.getContext('2d').putImageData(decoded.imageData, 0, 0);
+
+        if (!item.thumbnailUrl) {
+          generateCanvasThumbnailForItem(item).then(() => renderGallery());
+        }
+
+        el.lbLoader.style.display = 'none';
+        canvas.style.display = 'block';
+        fitCanvasToViewport();
+      } catch (err) {
+        if (item.thumbnailUrl) {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = el.previewCanvas;
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            el.metaComp.textContent = 'Embedded Preview';
+            el.lbLoader.style.display = 'none';
+            canvas.style.display = 'block';
+            fitCanvasToViewport();
+            showToast(`Showing embedded preview (${err.message})`);
+          };
+          img.src = item.thumbnailUrl;
+        } else {
+          el.lbLoader.style.display = 'none';
+          el.metaComp.textContent = 'Decode Error';
+          showToast(`Unable to render PSD: ${err.message}`);
+        }
+      }
+    }
+
+    function renderLayers(layers) {
+      el.metaLayerCount.textContent = layers.length;
+      if (layers.length === 0) {
+        el.layerStack.innerHTML = `<div style="font-size:0.78rem; color:var(--text-muted);">Flattened composite / No named layers</div>`;
+        return;
+      }
+
+      el.layerStack.innerHTML = layers.map(layer => `
+        <div class="layer-row">
+          <span>${escapeHtml(layer.name)}</span>
+          <span style="font-size:0.68rem; color:${layer.visible ? '#34d399' : '#64748b'}; flex-shrink:0;">
+            ${layer.visible ? 'Visible' : 'Hidden'}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function fitCanvasToViewport() {
+      const rect = el.canvasStage.getBoundingClientRect();
+      const cw = el.previewCanvas.width || 1;
+      const ch = el.previewCanvas.height || 1;
+      const pad = 40;
+      const scaleX = (rect.width - pad) / cw;
+      const scaleY = (rect.height - pad) / ch;
+      state.zoom = Math.max(0.05, Math.min(2.5, Math.min(scaleX, scaleY)));
+      state.panX = 0;
+      state.panY = 0;
+      updateCanvasTransform();
+    }
+
+    function updateCanvasTransform() {
+      el.previewCanvas.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+      el.zoomText.textContent = `${Math.round(state.zoom * 100)}%`;
+    }
+
+    function closeLightbox() {
+      el.lightboxModal.classList.remove('open');
+      state.activeLightboxItem = null;
+      document.documentElement.style.removeProperty('--accent-blue');
+      document.documentElement.style.removeProperty('--accent-sky');
+    }
+
+    /**
+     * ============================================================================
+     * EVENT LISTENERS & WIRING
+     * ============================================================================
+     */
+    el.btnHeaderAddDrive.addEventListener('click', mountStorageReadWrite);
+    el.btnMountReadWrite.addEventListener('click', mountStorageReadWrite);
+    el.btnEmptyMount.addEventListener('click', mountStorageReadWrite);
+
+    el.btnMountFallback.addEventListener('click', () => el.fallbackFolderInput.click());
+    el.fallbackFolderInput.addEventListener('change', (e) => {
+      handleFallbackFolderFiles(e.target.files);
+      el.fallbackFolderInput.value = '';
+    });
+
+    el.btnLoadSamples.addEventListener('click', loadBuiltInSamplePsds);
+    el.btnEmptySamples.addEventListener('click', loadBuiltInSamplePsds);
+
+    el.btnViewGrid.addEventListener('click', () => {
+      state.viewMode = 'grid';
+      el.btnViewGrid.classList.add('active');
+      el.btnViewList.classList.remove('active');
+      renderGallery();
+    });
+
+    el.btnViewList.addEventListener('click', () => {
+      state.viewMode = 'list';
+      el.btnViewList.classList.add('active');
+      el.btnViewGrid.classList.remove('active');
+      renderGallery();
+    });
+
+    el.searchInput.addEventListener('input', (e) => {
+      state.searchQuery = e.target.value;
+      renderGallery();
+    });
+
+    el.sortSelect.addEventListener('change', (e) => {
+      state.sortBy = e.target.value;
+      renderGallery();
+    });
+
+    el.btnSelectAll.addEventListener('click', () => {
+      const filtered = getFilteredSortedItems();
+      filtered.forEach(item => state.selectedIds.add(item.id));
+      renderGallery();
+    });
+
+    el.btnDeselectAll.addEventListener('click', () => {
+      state.selectedIds.clear();
+      renderGallery();
+    });
+
+    el.btnBulkDelete.addEventListener('click', () => {
+      const itemsToDelete = state.items.filter(i => state.selectedIds.has(i.id));
+      openDeleteDialog(itemsToDelete);
+    });
+
+    el.btnLbClose.addEventListener('click', closeLightbox);
+    
+    el.btnLbBgMode.addEventListener('click', () => {
+      state.bgModeIndex = (state.bgModeIndex + 1) % BG_MODES.length;
+      const mode = BG_MODES[state.bgModeIndex];
+      el.canvasStage.className = `canvas-stage ${mode.key === 'checkerboard' ? 'checkerboard' : mode.key}`;
+      el.btnLbBgMode.textContent = mode.label;
+    });
+
+    el.btnLbRename.addEventListener('click', () => {
+      if (state.activeLightboxItem) openRenameDialog(state.activeLightboxItem);
+    });
+
+    el.btnLbDelete.addEventListener('click', () => {
+      if (state.activeLightboxItem) openDeleteDialog([state.activeLightboxItem]);
+    });
+
+    el.btnLbExportPng.addEventListener('click', () => {
+      if (!state.activeLightboxItem) return;
+      const canvas = el.previewCanvas;
+      const link = document.createElement('a');
+      link.download = `${state.activeLightboxItem.name.replace(/\.psd$/i, '')}_composite.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('Exported composite preview as PNG.');
+    });
+
+    el.btnZoomIn.addEventListener('click', () => {
+      state.zoom = Math.min(5, state.zoom * 1.25);
+      updateCanvasTransform();
+    });
+
+    el.btnZoomOut.addEventListener('click', () => {
+      state.zoom = Math.max(0.05, state.zoom / 1.25);
+      updateCanvasTransform();
+    });
+
+    el.btnZoomFit.addEventListener('click', fitCanvasToViewport);
+    el.btnZoomActual.addEventListener('click', () => {
+      state.zoom = 1;
+      state.panX = 0;
+      state.panY = 0;
+      updateCanvasTransform();
+    });
+
+    let isPointerDown = false;
+    let startX = 0, startY = 0;
+
+    el.canvasStage.addEventListener('pointerdown', (e) => {
+      isPointerDown = true;
+      startX = e.clientX - state.panX;
+      startY = e.clientY - state.panY;
+      try {
+        el.canvasStage.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    });
+
+    el.canvasStage.addEventListener('pointermove', (e) => {
+      if (!isPointerDown) return;
+      state.panX = e.clientX - startX;
+      state.panY = e.clientY - startY;
+      updateCanvasTransform();
+    });
+
+    el.canvasStage.addEventListener('pointerup', (e) => {
+      isPointerDown = false;
+      try {
+        el.canvasStage.releasePointerCapture(e.pointerId);
+      } catch (_) {}
+    });
+
+    el.canvasStage.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 0.87;
+      state.zoom = Math.max(0.05, Math.min(5, state.zoom * factor));
+      updateCanvasTransform();
+    }, { passive: false });
+
+    el.btnCancelRename.addEventListener('click', closeRenameDialog);
+    el.btnConfirmRename.addEventListener('click', executeRename);
+    el.renameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') executeRename();
+      if (e.key === 'Escape') closeRenameDialog();
+    });
+
+    el.btnCancelDelete.addEventListener('click', closeDeleteDialog);
+    el.btnConfirmDelete.addEventListener('click', executeDelete);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (el.renameDialog.classList.contains('open')) {
+          closeRenameDialog();
+        } else if (el.deleteDialog.classList.contains('open')) {
+          closeDeleteDialog();
+        } else if (el.lightboxModal.classList.contains('open')) {
+          closeLightbox();
+        }
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadBuiltInSamplePsds();
+    });
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('Service Worker Registered Successfully'))
+          .catch(err => console.log('Service Worker Registration Failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>@
